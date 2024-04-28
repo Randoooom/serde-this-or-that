@@ -53,7 +53,7 @@ where
     deserializer.deserialize_any(DeserializeF64WithVisitor)
 }
 
-/// De-serialize either a `null`, `bool`, `str`, `u64`, or `f64`
+/// De-serialize either a `null`, `bool`, `str`, `u64`, , `i32`, or `f64`
 /// as a *boolean* value.
 ///
 /// # Truthy String Values
@@ -72,7 +72,7 @@ where
 ///   - `YES`
 ///
 /// # Errors
-/// Returns an error if an unsigned `u64` or a float `f64` value is not
+/// Returns an error if an unsigned `u64`, signed `i64`, or a float `f64` value is not
 /// a *zero* or a *one*.
 ///
 /// # Returns
@@ -293,10 +293,14 @@ impl<'de> de::Visitor<'de> for DeserializeBoolWithVisitor {
     where
         E: de::Error,
     {
-        Err(de::Error::invalid_value(
-            Unexpected::Signed(v),
-            &"zero or one",
-        ))
+        match v {
+            0 => Ok(false),
+            1 => Ok(true),
+            other => Err(de::Error::invalid_value(
+                Unexpected::Signed(other),
+                &"zero or one",
+            )),
+        }
     }
 
     fn visit_u64<E>(self, v: u64) -> Result<Self::Value, E>
